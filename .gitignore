@@ -1,0 +1,8 @@
+.DS_Store
+__pycache__/
+*_example_*/
+*.root
+*.png
+*.pdf
+*.log
+py.py
