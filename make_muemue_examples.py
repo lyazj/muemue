@@ -11,6 +11,10 @@ for min_lepton_pt in np.array([  # GeV
     0.000010,
     0.000100,
     0.001000,
+    0.002000,
+    0.003000,
+    0.004000,
+    #0.005000,
 ]):
     args.append({
         'workdir': f'muemue_example_{muon_energy}GeV_{min_lepton_pt:.0e}GeV',

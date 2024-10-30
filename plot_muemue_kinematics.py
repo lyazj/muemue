@@ -55,10 +55,9 @@ for muemue_dirname in sorted(glob.glob('muemue_example_*GeV_*GeV/')):
     data['theta'][(muon_energy, min_lepton_pt)] = theta
 
 for key, data_value in data.items():
-    continue  # [TEMP]
     plt.figure(dpi=300)
     if key == 'xs':
-        for (muon_energy, min_lepton_pt), value in data_value.items():
+        for (muon_energy, min_lepton_pt), value in sorted(data_value.items()):
             print(key, muon_energy, min_lepton_pt)
             label = f'$E_\\mu = {muon_energy}\\ \\mathrm{{GeV}},\\ p_{{\\mathrm{{T, min}}}} = \\text{{{min_lepton_pt:.0e}}}\\ \\mathrm{{GeV}}$'
             plt.scatter(0, value, label=label)
@@ -66,13 +65,13 @@ for key, data_value in data.items():
         plt.ylabel(f'Cross section [pb]')
         plt.yscale('log')
     else:
-        for (muon_energy, min_lepton_pt), value in data_value.items():
+        for (muon_energy, min_lepton_pt), value in sorted(data_value.items()):
             print(key, muon_energy, min_lepton_pt)
             label = f'$E_\\mu = {muon_energy}\\ \\mathrm{{GeV}},\\ p_{{\\mathrm{{T, min}}}} = \\text{{{min_lepton_pt:.0e}}}\\ \\mathrm{{GeV}}$'
             plt.scatter(value[:,1], value[:,0], label=label)
         plt.xlabel(f'electron {key}')
         plt.ylabel(f'muon {key}')
-    plt.legend()
+    plt.legend(loc='upper right')
     plt.grid()
     plt.tight_layout()
     plt.savefig(f'muemue_{key}.png')
