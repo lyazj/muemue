@@ -18,12 +18,14 @@ fields = [
     'Particle.E',
 ]
 
+params = []
 data = {'xs': {}, 'E': {}, 'theta': {} }  # [key][(muon_energy, min_lepton_pt)]
 
 for muemue_dirname in sorted(glob.glob('muemue_example_*GeV_*GeV/')):
     r = re.search(r'^muemue_example_([0-9.eE+-]+)GeV_([0-9.eE+-]+)GeV/$', muemue_dirname)
     if not r: continue
     muon_energy, min_lepton_pt = map(float, r.groups())
+    params.append((muon_energy, min_lepton_pt))
 
     # Load events.
     rootpath = os.path.join(muemue_dirname, 'Events', 'run_01', 'unweighted_events.root')
@@ -53,6 +55,7 @@ for muemue_dirname in sorted(glob.glob('muemue_example_*GeV_*GeV/')):
     data['theta'][(muon_energy, min_lepton_pt)] = theta
 
 for key, data_value in data.items():
+    continue  # [TEMP]
     plt.figure(dpi=300)
     if key == 'xs':
         for (muon_energy, min_lepton_pt), value in data_value.items():
@@ -74,3 +77,9 @@ for key, data_value in data.items():
     plt.tight_layout()
     plt.savefig(f'muemue_{key}.png')
     plt.close()
+
+for param in params:
+    muon_energy, min_lepton_pt = param
+    with open(f'muemue_example_{muon_energy}GeV_{min_lepton_pt:.0e}GeV.txt', 'w') as file:
+        for theta, E in zip(data['theta'][param], data['E'][param]):
+            print(' '.join(['%.18e'] * 4) % (*theta, *E), file=file)
