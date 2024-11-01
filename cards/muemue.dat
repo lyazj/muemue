@@ -14,6 +14,7 @@ reweight = OFF
 done
 
 set nevents = $SUB:nevent
+set iseed = $SUB:seed
 set lpp1 = 0
 set lpp2 = 0
 set ebeam1 = $SUB:muon_energy
