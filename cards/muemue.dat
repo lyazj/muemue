@@ -20,6 +20,7 @@ set lpp2 = 0
 set ebeam1 = $SUB:muon_energy
 set ebeam2 = $SUB:electron_energy
 set ptl = $SUB:min_lepton_pt
+set el = $SUB:min_lepton_energy
 set etal = -1.0
 set drll = -1.0
 set pdlabel = none
