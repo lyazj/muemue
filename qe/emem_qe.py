@@ -57,6 +57,7 @@ def u_PH(P, H):
     E = P[:,0]  # energy
     p3 = P[:,1:4]  # 3-momentum
     p = np.sqrt(np.sum(p3*p3, axis=1))  # 3-momentum modulo
+    #theta = np.arccos(p3[:,2] / (p + (p == 0)))  # polar angle
     theta = np.arctan2(np.hypot(p3[:,0], p3[:,1]), p3[:,2])  # polar angle
     phi = np.arctan2(p3[:,1], p3[:,0])  # azimuthal angle
     m = np.sqrt(E*E - p*p)  # static mass
