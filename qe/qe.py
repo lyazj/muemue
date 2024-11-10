@@ -25,8 +25,11 @@ P2 = np.repeat(get_P(m_e, m_e, 0, 0).reshape(1, 4), E_e.shape[0], axis=0)
 P3 = get_P(E_mu, m_mu, theta_mu, 0)
 E_e = P1[:,0] + P2[:,0] - P3[:,0]
 P4 = get_P(E_e, m_e, theta_e, np.pi)
+print('theta1 =', theta_mu[0])
+print('theta2 =', theta_e[0])
+print('E3 =', P3[0,0])
 
-theta_mu, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_mu, P1, P2, P3, P4))  # [DEBUG]
+#theta_mu, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_mu, P1, P2, P3, P4))  # [DEBUG]
 
 g = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
 gamma = [
@@ -56,14 +59,14 @@ def u_PH(P, H):
     phi = np.arctan2(p3[:,1], p3[:,0])  # azimuthal angle
     m = np.sqrt(E*E - p*p)  # static mass
     if H == 1:
-        return np.sqrt((E/m + 1) / 2).reshape(-1, 1) * np.array([
+        return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
             np.cos(theta/2),
             np.exp(1j * phi) * np.sin(theta/2),
             p / (m + E) * np.cos(theta/2),
             p / (m + E) * np.exp(1j * phi) * np.sin(theta/2),
         ]).T
     elif H == -1:
-        return np.sqrt((E/m + 1) / 2).reshape(-1, 1) * np.array([
+        return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
             np.sin(theta/2),
             -np.exp(1j * phi) * np.cos(theta/2),
             -p / (m + E) * np.sin(theta/2),
@@ -73,11 +76,6 @@ def u_PH(P, H):
 def M_uP(u1, u2, u3, u4, P1, P2, P3, P4):
     assert P1.shape[1] == P3.shape[1] == 4
     Q = P1[:,0:4] - P3[:,0:4]  # 4-momentum transfer
-    print(np.sum(u3.conjugate() @ (gamma[0] @ gamma[0]) * u1, axis=1))
-    print(np.sum(u3.conjugate() @ (gamma[1] @ gamma[0]) * u1, axis=1))
-    print(np.sum(u3.conjugate() @ (gamma[2] @ gamma[0]) * u1, axis=1))
-    print(np.sum(u3.conjugate() @ (gamma[3] @ gamma[0]) * u1, axis=1))
-    exit()
     return sum(  # let e = 1
         np.sum(u3.conjugate() @ (gamma[0] @ gamma[i]) * u1, axis=1)
         #* (g[i,i] / lorentz_inner(Q, Q)) *
@@ -89,7 +87,7 @@ def M_uP(u1, u2, u3, u4, P1, P2, P3, P4):
 def rho2_P(P1, P2, P3, P4):
     M = np.zeros((P1.shape[0], 2, 2), dtype='complex')
     u1s, u2s, u3s, u4s = map(lambda P: [u_PH(P, 1), u_PH(P, -1)], (P1, P2, P3, P4))
-    print(*u1s, *u2s, *u3s, *u4s, sep='\n')
+    #print(*u1s, *u2s, *u3s, *u4s, sep='\n')
     for i in range(2):
         u3 = u3s[i]
         for j in range(2):
@@ -99,7 +97,6 @@ def rho2_P(P1, P2, P3, P4):
                 for l in range(2):
                     u2 = u2s[l]
                     print(i, j, k, l)
-                    print(M_uP(u1, u2, u3, u4, P1, P2, P3, P4))
                     M[:,i,j] += M_uP(u1, u2, u3, u4, P1, P2, P3, P4)
     M /= 4
     M = M.reshape(-1, 4)
@@ -107,7 +104,9 @@ def rho2_P(P1, P2, P3, P4):
     for i in range(4):
         for j in range(4):
             rho2[:,i,j] = (M[:,i].conjugate() * M[:,j])
-    return rho2 / np.trace(rho2, axis1=1, axis2=2).reshape(-1, 1, 1)
+    rho2 /= np.trace(rho2, axis1=1, axis2=2).reshape(-1, 1, 1)
+    print(rho2[:1])
+    return rho2
 
 rho2 = rho2_P(P1, P2, P3, P4)
 R = rho2 @ np.kron(sigma[1], sigma[1]) @ rho2.conj() @ np.kron(sigma[1], sigma[1])
