@@ -106,7 +106,7 @@ def rho2_P(P1, P2, P3, P4):
     rho2 = np.empty((P1.shape[0], 4, 4), dtype='complex')
     for i in range(4):
         for j in range(4):
-            rho2[:,i,j] = (M[:,i].conjugate() * M[:,j])
+            rho2[:,i,j] = M[:,i] * M[:,j].conjugate()
     rho2 /= np.trace(rho2, axis1=1, axis2=2).reshape(-1, 1, 1)
     print(rho2[:1])
     return rho2
