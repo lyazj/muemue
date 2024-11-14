@@ -1,8 +1,5 @@
 import re
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
-from matplotlib import colors
 
 NEVENT_MAX = None
 
@@ -15,10 +12,6 @@ def get_P(E, m, theta, phi):
         p * np.cos(theta),
     ]).T
 
-plt.figure(dpi=300)
-cmap = plt.get_cmap('viridis')
-cmap.set_bad('lightgray', 1.0)
-offset = 0
 for path in [
     'muemue_example_1.0GeV_pT_0.00e+00GeV_eta_2.85e+00.txt',
     'muemue_example_10.0GeV_pT_0.00e+00GeV_eta_4.50e+00.txt',
@@ -43,18 +36,11 @@ for path in [
     P2 = np.repeat(get_P(m_e, m_e, 0, 0).reshape(1, 4), E_e.shape[0], axis=0)
     P3 = get_P(E_mu, m_mu, theta_mu, 0)
     P4 = get_P(E_e, m_e, theta_e, np.pi)
-    P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
+    #P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
     theta_mu = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
     theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
     E_mu = P3[:,0]
     E_e = P4[:,0]
-    print('theta1 =', theta_mu[0])
-    print('theta2 =', theta_e[0])
-    print('E3 =', P3[0,0])
-    print('P1 = ', P1[0])
-    print('P2 = ', P2[0])
-    print('P3 = ', P3[0])
-    print('P4 = ', P4[0])
     
     #theta_mu, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_mu, P1, P2, P3, P4))  # [DEBUG]
     
@@ -143,20 +129,10 @@ for path in [
     eigenvalues = np.sort(np.sqrt(eigenvalues), axis=1)
     concurrence = eigenvalues[:,-1] - np.sum(eigenvalues[:,:-1], axis=1)
     concurrence = np.maximum(concurrence, 0)
-    
-    data = np.array([theta_mu, theta_e, concurrence]).T
-    data = data[data[:,0].argsort()]
-    data = np.concatenate([data[-1:], data[:-1]])
-    data = data[data[:,0] >= np.pi / 2]
-    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-3, vmax=1),
-         #label=r'$E_\mu$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (muon_energy, lepton_pt, lepton_eta))
-         label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta_e + %g$)' % (muon_energy, lepton_eta, offset))
-    offset += 1
 
-plt.xlabel(r'$\theta^\prime_\mu$ (center of mass frame)')
-plt.ylabel(r'$\theta^\prime_e$')
-plt.legend()
-plt.grid()
-plt.colorbar()
-plt.tight_layout()
-plt.savefig(__file__.replace('.py', '.png'))
+    print('Muon energy:', muon_energy)
+    print('Efficiency:', np.mean(concurrence > 0))
+    print('Max theta_mu:', np.max(theta_mu[concurrence > 0]))
+    print('Max theta_e:', np.max(theta_e[concurrence > 0]))
+    print('Min E_mu:', np.min(E_mu[concurrence > 0]))
+    print('Min E_e:', np.min(E_e[concurrence > 0]))
