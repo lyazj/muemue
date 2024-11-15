@@ -155,10 +155,18 @@ for path in [
     theta_mu_com, chi2 = util.fit(obs, obs_unc)
     theta_mu, theta_e, E_mu, E_e = util.get_observable(theta_mu_com).T
     #print('after:', theta_mu[:10], theta_e[:10], E_mu[:10], E_e[:10], sep='\n')
-    #plt.hist(chi2, 20, density=True)
-    #x = np.linspace(0, 20, 100)
-    #plt.plot(x, __import__('scipy').stats.chi2(4).pdf(x))
-    #plt.show()
+    from scipy import stats
+    n, bins, _ = plt.hist(chi2, 20, density=True, label='smeared and fit')
+    dof = stats.chi2.fit(chi2)[0]
+    x = np.linspace(bins[0], bins[-1], 1001)
+    plt.plot(x, stats.chi2(dof).pdf(x), label=r'$\chi^2(%.2f)$' % dof)
+    plt.xlabel('Summed square relevant error')
+    plt.ylabel('Density')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(path.replace('.txt', '_chi2.png'))
+    plt.clf()
 
     P3 = util.get_P(E_mu, m_mu, theta_mu, 0)
     P4 = util.get_P(E_e, m_e, theta_e, np.pi)
@@ -181,4 +189,4 @@ plt.grid()
 plt.colorbar()
 plt.tight_layout()
 plt.savefig('roc.png')
-iplt.clf()
+plt.clf()
