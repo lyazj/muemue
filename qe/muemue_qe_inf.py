@@ -131,7 +131,9 @@ for path in [
     concurrence = np.maximum(concurrence, 0)
 
     print('Muon energy:', muon_energy)
+    print('Max concurrence:', np.max(concurrence))
     print('Efficiency:', np.mean(concurrence > 0))
+    print('Efficiency (theta > 0.5 mrad):', np.mean(concurrence > 0.5e-3))
     print('Max theta_mu:', np.max(theta_mu[concurrence > 0]))
     print('Max theta_e:', np.max(theta_e[concurrence > 0]))
     print('Min E_mu:', np.min(E_mu[concurrence > 0]))
