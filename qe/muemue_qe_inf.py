@@ -1,49 +1,16 @@
 import re
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import colors
+from sklearn.metrics import roc_curve, roc_auc_score
+from muemue_qe_util import MuEQEUtil
 
 NEVENT_MAX = None
 
-def get_P(E, m, theta, phi):
-    p = np.sqrt(E*E - m*m)
-    return np.array([
-        E,
-        p * np.sin(theta) * np.cos(phi),
-        p * np.sin(theta) * np.sin(phi),
-        p * np.cos(theta),
-    ]).T
+cmap = plt.get_cmap('viridis')
+cmap.set_bad('lightgray', 1.0)
 
-for path in [
-    'muemue_example_1.0GeV_pT_0.00e+00GeV_eta_2.85e+00.txt',
-    'muemue_example_10.0GeV_pT_0.00e+00GeV_eta_4.50e+00.txt',
-    'muemue_example_160.0GeV_pT_0.00e+00GeV_eta_5.20e+00.txt',
-]:
-    muon_energy, lepton_pt, lepton_eta = map(float,
-        re.search(r'_([0-9.e+-]*)GeV_pT_([0-9.e+-]*)GeV_eta_([0-9.e+-]*)\.txt', path).groups())
-    m_e = 0.511e-3
-    m_mu = 106e-3
-    gamma = (muon_energy + m_e) / np.sqrt(m_e**2 + m_mu**2 + 2*m_e*muon_energy)
-    beta = np.sqrt(1 - 1 / gamma**2)
-    def lab_to_com(P):
-        P0 = gamma * (P[:,0] - beta * P[:,3])
-        P3 = gamma * (P[:,3] - beta * P[:,0])
-        P[:,0] = P0
-        P[:,3] = P3
-        return P
-    theta_mu, theta_e, E_mu, E_e = np.array(
-        open(path).read().strip().split(), dtype='float'
-    ).reshape(-1, 4)[:(NEVENT_MAX if NEVENT_MAX else int(1e20))].T
-    P1 = np.repeat(get_P(muon_energy, m_mu, 0, 0).reshape(1, 4), E_mu.shape[0], axis=0)
-    P2 = np.repeat(get_P(m_e, m_e, 0, 0).reshape(1, 4), E_e.shape[0], axis=0)
-    P3 = get_P(E_mu, m_mu, theta_mu, 0)
-    P4 = get_P(E_e, m_e, theta_e, np.pi)
-    #P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
-    theta_mu = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
-    theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
-    E_mu = P3[:,0]
-    E_e = P4[:,0]
-    
-    #theta_mu, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_mu, P1, P2, P3, P4))  # [DEBUG]
-    
+def get_concurrence(P1, P2, P3, P4):
     g = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
     gamma = [
         np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]]),
@@ -129,6 +96,31 @@ for path in [
     eigenvalues = np.sort(np.sqrt(eigenvalues), axis=1)
     concurrence = eigenvalues[:,-1] - np.sum(eigenvalues[:,:-1], axis=1)
     concurrence = np.maximum(concurrence, 0)
+    return concurrence
+
+plt.figure(dpi=300)
+for path in [
+    #'muemue_example_1.0GeV_pT_0.00e+00GeV_eta_2.85e+00.txt',
+    'muemue_example_10.0GeV_pT_0.00e+00GeV_eta_4.50e+00.txt',
+    #'muemue_example_160.0GeV_pT_0.00e+00GeV_eta_5.20e+00.txt',
+]:
+    muon_energy, lepton_pt, lepton_eta = map(float,
+        re.search(r'_([0-9.e+-]*)GeV_pT_([0-9.e+-]*)GeV_eta_([0-9.e+-]*)\.txt', path).groups())
+    util = MuEQEUtil(muon_energy)
+    m_mu, m_e = util.m_mu, util.m_e
+    theta_mu, theta_e, E_mu, E_e = np.array(
+        open(path).read().strip().split(), dtype='float'
+    ).reshape(-1, 4)[:(NEVENT_MAX if NEVENT_MAX else int(1e20))].T
+    P1 = np.repeat(util.get_P(muon_energy, m_mu, 0, 0).reshape(1, 4), E_mu.shape[0], axis=0)
+    P2 = np.repeat(util.get_P(m_e, m_e, 0, 0).reshape(1, 4), E_e.shape[0], axis=0)
+    P3 = util.get_P(E_mu, m_mu, theta_mu, 0)
+    P4 = util.get_P(E_e, m_e, theta_e, np.pi)
+    #tuple(map(util.lab_to_com, (P1, P2, P3, P4)))
+    theta_mu = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
+    theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
+    E_mu = P3[:,0]
+    E_e = P4[:,0]
+    concurrence = get_concurrence(P1, P2, P3, P4)
 
     print('Muon energy:', muon_energy)
     print('Max concurrence:', np.max(concurrence))
@@ -138,3 +130,55 @@ for path in [
     print('Max theta_e:', np.max(theta_e[concurrence > 0]))
     print('Min E_mu:', np.min(E_mu[concurrence > 0]))
     print('Min E_e:', np.min(E_e[concurrence > 0]))
+
+    label = concurrence > 0
+    theta_mu_org = theta_mu.copy()
+    theta_e_org = theta_e.copy()
+    E_mu_org = E_mu.copy()
+    E_e_org = E_e.copy()
+
+    # Smear.
+    theta_mu_unc = 0.3e-3 * np.ones_like(theta_mu)
+    theta_e_unc = 0.3e-3 * np.ones_like(theta_e)
+    E_mu_unc = 0.5 * np.ones_like(E_mu)
+    E_e_unc = 0.5 * np.ones_like(E_e)
+    theta_mu += np.random.normal(0.0, theta_mu_unc, theta_mu.shape)
+    theta_e += np.random.normal(0.0, theta_e_unc, theta_e.shape)
+    E_mu += np.random.normal(0.0, E_mu_unc, E_mu.shape)
+    E_e += np.random.normal(0.0, E_e_unc, E_e.shape)
+
+    # Fit.
+    #print('true:', theta_mu_org[:10], theta_e_org[:10], E_mu_org[:10], E_e_org[:10], sep='\n')
+    #print('before:', theta_mu[:10], theta_e[:10], E_mu[:10], E_e[:10], sep='\n')
+    obs = np.array([theta_mu, theta_e, E_mu, E_e]).T
+    obs_unc = np.array([theta_mu_unc, theta_e_unc, E_mu_unc, E_e_unc]).T
+    theta_mu_com, chi2 = util.fit(obs, obs_unc)
+    theta_mu, theta_e, E_mu, E_e = util.get_observable(theta_mu_com).T
+    #print('after:', theta_mu[:10], theta_e[:10], E_mu[:10], E_e[:10], sep='\n')
+    #plt.hist(chi2, 20, density=True)
+    #x = np.linspace(0, 20, 100)
+    #plt.plot(x, __import__('scipy').stats.chi2(4).pdf(x))
+    #plt.show()
+
+    P3 = util.get_P(E_mu, m_mu, theta_mu, 0)
+    P4 = util.get_P(E_e, m_e, theta_e, np.pi)
+    #tuple(map(util.lab_to_com, (P1, P2, P3, P4)))
+    theta_mu = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
+    theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
+    E_mu = P3[:,0]
+    E_e = P4[:,0]
+    concurrence = get_concurrence(P1, P2, P3, P4)
+    fpr, tpr, thr = roc_curve(label, concurrence)
+    auc = roc_auc_score(label, concurrence)
+    i_max = np.argmax(fpr > 1e-3) - 1
+    plt.scatter(fpr, tpr, c=thr, cmap=cmap, norm=colors.LogNorm(vmin=np.sort(thr)[1], vmax=np.sort(thr)[-2]),
+         label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  (AUC = %.3f, TPR = %.3f)' % (
+             muon_energy, lepton_eta, auc, tpr[i_max]))
+plt.xlabel('false positive rate')
+plt.ylabel('true positive rate')
+plt.legend()
+plt.grid()
+plt.colorbar()
+plt.tight_layout()
+plt.savefig('roc.png')
+iplt.clf()
