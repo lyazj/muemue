@@ -70,6 +70,13 @@ for path in [
         np.array([[0, -1j], [1j, 0]]),
         np.array([[1, 0], [0, -1]]),
     ]
+    rho_basis = np.array([
+        np.eye(4),
+        *(np.kron(sigma[i], np.eye(2)) for i in range(3)),
+        *(np.kron(np.eye(2), sigma[i]) for i in range(3)),
+        *(np.kron(sigma[i // 3], sigma[i % 3]) for i in range(9)),
+    ]).reshape(16, 16).T / 4
+    rho_to_corr = np.linalg.inv(rho_basis)[-9:].reshape(3, 3, 4, 4)
     
     def lorentz_inner(P1, P2):
         assert P1.shape[1] == P2.shape[1] == 4
@@ -144,11 +151,18 @@ for path in [
     concurrence = eigenvalues[:,-1] - np.sum(eigenvalues[:,:-1], axis=1)
     concurrence = np.maximum(concurrence, 0)
 
-    data = np.array([theta_mu, theta_e, concurrence]).T
+    corr = np.sum(rho_to_corr.reshape(1, 3, 3, 16) * rho.reshape(-1, 1, 1, 16), axis=3)
+    print(corr[0])
+    eigenvalues = np.linalg.eigvals(corr.conjugate().transpose(0, 2, 1) @ corr).real
+    eigenvalues *= (np.abs(eigenvalues) >= 1e-10)
+    eigenvalues = np.sort(np.sqrt(eigenvalues), axis=1)
+    CHSH = 2 * np.sqrt(np.sum(eigenvalues[:,-2:], axis=1))
+
+    data = np.array([theta_mu, theta_e, CHSH * (CHSH >= 2)]).T
     data = data[data[:,0].argsort()]
     data = np.concatenate([data[-1:], data[:-1]])
     data = data[data[:,0] >= np.pi / 2]
-    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-3, vmax=1),
+    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=2, vmax=2**1.5),
          #label=r'$E_\mu$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (muon_energy, lepton_pt, lepton_eta))
          label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta_e + %g$)' % (muon_energy, lepton_eta, offset))
     offset += 1
