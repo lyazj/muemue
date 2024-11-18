@@ -148,7 +148,7 @@ for path in [
     data = data[data[:,0].argsort()]
     data = np.concatenate([data[-1:], data[:-1]])
     data = data[data[:,0] >= np.pi / 2]
-    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-3, vmax=1),
+    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-4, vmax=1),
          #label=r'$E_\mu$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (muon_energy, lepton_pt, lepton_eta))
          label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta_e + %g$)' % (muon_energy, lepton_eta, offset))
     offset += 1
