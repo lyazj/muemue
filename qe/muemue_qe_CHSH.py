@@ -171,7 +171,7 @@ for path in [
     colors[data[:,2] <= 2] = [0.8, 0.8, 0.8, 1]
     plt.scatter(data[:,0], data[:,1] + offset, c=colors,
          #label=r'$E_\mu$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (muon_energy, lepton_pt, lepton_eta))
-         label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta_e + %g$)' % (muon_energy, lepton_eta, offset))
+         label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (muon_energy, lepton_eta, offset))
     offset += 1
 
 plt.xlabel(r'$\theta^\prime_\mu$ (center of mass frame)')
