@@ -181,6 +181,7 @@ for path, smear in [
     eigenvalues *= (np.abs(eigenvalues) >= 1e-10)
     eigenvalues = np.sort(np.sqrt(eigenvalues), axis=1)
     CHSH = 2 * np.sqrt(np.sum(eigenvalues[:,-2:], axis=1))
+    print('Efficiency:', np.mean(CHSH > 2))
 
     data = np.array([theta_mu, theta_e, CHSH]).T
     data = data[data[:,0].argsort()]
@@ -191,8 +192,8 @@ for path, smear in [
          label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  (%s$\theta_e + %g$)' % (muon_energy, lepton_eta, 'smeared, ' if smear else '', offset))
     offset += 0.05
 
-plt.xlabel(r'$\theta^\prime_\mu$ (center of mass frame)')
-plt.ylabel(r'$\theta^\prime_e$')
+plt.xlabel(r'$\theta_\mu$ (lab frame)')
+plt.ylabel(r'$\theta_e$')
 plt.legend()
 plt.grid()
 cbar = plt.colorbar()
