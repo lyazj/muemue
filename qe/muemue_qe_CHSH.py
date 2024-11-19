@@ -155,7 +155,7 @@ for path in [
     concurrence = np.maximum(concurrence, 0)
 
     #corr = np.sum(rho_to_corr.reshape(1, 3, 3, 16) * rho.reshape(-1, 1, 1, 16), axis=3)
-    corr = np.sum(sigma_kron.reshape(1, 3, 3, 16) * rho.reshape(-1, 1, 1, 16), axis=3)
+    corr = np.sum(sigma_kron.reshape(1, 3, 3, 16) * rho.transpose(0, 2, 1).reshape(-1, 1, 1, 16), axis=3)
     print(corr[0])
     eigenvalues = np.linalg.eigvals(corr.conjugate().transpose(0, 2, 1) @ corr).real
     eigenvalues *= (np.abs(eigenvalues) >= 1e-10)
