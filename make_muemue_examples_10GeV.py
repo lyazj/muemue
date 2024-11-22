@@ -2,8 +2,9 @@
 
 import numpy as np
 import multiprocessing
-from make_muemue_point import muemue_card
+import MG5Card
 
+muemue_card = MG5Card.MG5Card('cards/muemue.dat')
 pool = multiprocessing.Pool(6)
 
 args = []
