@@ -1,7 +1,6 @@
 import re
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
 from matplotlib import colors
 
 NEVENT_MAX = None
@@ -55,9 +54,9 @@ for path in [
     print('P2 = ', P2[0])
     print('P3 = ', P3[0])
     print('P4 = ', P4[0])
-    
+
     #theta_mu, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_mu, P1, P2, P3, P4))  # [DEBUG]
-    
+
     g = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
     gamma = [
         np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]]),
@@ -70,13 +69,13 @@ for path in [
         np.array([[0, -1j], [1j, 0]]),
         np.array([[1, 0], [0, -1]]),
     ]
-    
+
     def lorentz_inner(P1, P2):
         assert P1.shape[1] == P2.shape[1] == 4
         E1, p1 = P1[:,0], P1[:,1:]
         E2, p2 = P2[:,0], P2[:,1:]
         return E1*E2 - np.sum(p1*p2, axis=-1)
-    
+
     def u_PH(P, H):
         assert P.shape[1] == 4
         E = P[:,0]  # energy
@@ -100,7 +99,7 @@ for path in [
                 -p / (m + E) * np.sin(theta/2),
                 p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
             ]).T
-    
+
     def M_uP(u1, u2, u3, u4, P1, P2, P3, P4):
         assert P1.shape[1] == P3.shape[1] == 4
         Q = P1[:,0:4] - P3[:,0:4]  # 4-momentum transfer
@@ -111,7 +110,7 @@ for path in [
             np.sum(u4.conjugate() @ (gamma[0] @ gamma[i]) * u2, axis=1)
             for i in range(4)
         )
-    
+
     def rho_P(P1, P2, P3, P4):
         u1s, u2s, u3s, u4s = map(lambda P: [u_PH(P, 1), u_PH(P, -1)], (P1, P2, P3, P4))
         #print(*u1s, *u2s, *u3s, *u4s, sep='\n')
@@ -135,7 +134,7 @@ for path in [
         rho /= np.trace(rho, axis1=1, axis2=2).reshape(-1, 1, 1)
         print(rho[:1])
         return rho
-    
+
     rho = rho_P(P1, P2, P3, P4)
     R = rho @ np.kron(sigma[1], sigma[1]) @ rho.conj() @ np.kron(sigma[1], sigma[1])
     eigenvalues = np.linalg.eigvals(R).real
