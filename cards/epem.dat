@@ -1,0 +1,29 @@
+#!/usr/bin/env mg5_aMC
+
+import model sm-lepton_masses
+
+generate e+ e- > e+ e- / z h
+output $SUB:workdir
+launch
+
+shower = OFF
+detector = OFF
+analysis = ExRoot
+madspin = OFF
+reweight = OFF
+done
+
+set nevents = $SUB:nevent
+set iseed = $SUB:seed
+set lpp1 = 0
+set lpp2 = 0
+set ebeam1 = $SUB:positron_energy
+set ebeam2 = $SUB:electron_energy
+set ptl = $SUB:min_lepton_pt
+set el = $SUB:min_lepton_com_energy
+set etal = -1.0
+set etalmin = $SUB:min_lepton_eta
+set drll = -1.0
+set pdlabel = none
+set use_syst = False
+done

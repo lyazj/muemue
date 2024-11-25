@@ -25,7 +25,6 @@ for muemue_dirname in sorted(glob.glob('muemue_example_*GeV_*_0/')):
     r = re.search(r'^muemue_example_([0-9.eE+-]+)GeV_pT_([0-9.eE+-]+)GeV_eta_([0-9.eE+-]+)_[0-9]+/$', muemue_dirname)
     if not r: continue
     muon_energy, min_lepton_pt, min_lepton_eta = map(float, r.groups())
-    if muon_energy != 160.0: continue
     params.append((muon_energy, min_lepton_pt, min_lepton_eta))
 
     # Load events.

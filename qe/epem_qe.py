@@ -19,15 +19,17 @@ cmap = plt.get_cmap('viridis')
 cmap.set_bad('lightgray', 1.0)
 offset = 0
 for path in [
-    'muemue_example_1.0GeV_pT_0.00e+00GeV_eta_2.85e+00.txt',
-    'muemue_example_10.0GeV_pT_0.00e+00GeV_eta_4.50e+00.txt',
-    'muemue_example_160.0GeV_pT_0.00e+00GeV_eta_5.20e+00.txt',
+    'epem_example_1.0GeV_pT_0.00e+00GeV_eta_1.00e-01.txt',
+    'epem_example_1.0GeV_pT_0.00e+00GeV_eta_1.00e+00.txt',
+    'epem_example_1.0GeV_pT_0.00e+00GeV_eta_2.00e+00.txt',
+    'epem_example_1.0GeV_pT_0.00e+00GeV_eta_3.00e+00.txt',
+    'epem_example_1.0GeV_pT_0.00e+00GeV_eta_4.00e+00.txt',
 ]:
-    muon_energy, lepton_pt, lepton_eta = map(float,
+    positron_energy, lepton_pt, lepton_eta = map(float,
         re.search(r'_([0-9.e+-]*)GeV_pT_([0-9.e+-]*)GeV_eta_([0-9.e+-]*)\.txt', path).groups())
+    m_p = 0.511e-3
     m_e = 0.511e-3
-    m_mu = 106e-3
-    gamma = (muon_energy + m_e) / np.sqrt(m_e**2 + m_mu**2 + 2*m_e*muon_energy)
+    gamma = (positron_energy + m_e) / np.sqrt(m_e**2 + m_e**2 + 2*m_e*positron_energy)
     beta = np.sqrt(1 - 1 / gamma**2)
     def lab_to_com(P):
         P0 = gamma * (P[:,0] - beta * P[:,3])
@@ -35,19 +37,19 @@ for path in [
         P[:,0] = P0
         P[:,3] = P3
         return P
-    theta_mu, theta_e, E_mu, E_e = np.array(
+    theta_p, theta_e, E_p, E_e = np.array(
         open(path).read().strip().split(), dtype='float'
     ).reshape(-1, 4)[:(NEVENT_MAX if NEVENT_MAX else int(1e20))].T
-    P1 = np.repeat(get_P(muon_energy, m_mu, 0, 0).reshape(1, 4), E_mu.shape[0], axis=0)
+    P1 = np.repeat(get_P(positron_energy, m_p, 0, 0).reshape(1, 4), E_p.shape[0], axis=0)
     P2 = np.repeat(get_P(m_e, m_e, 0, 0).reshape(1, 4), E_e.shape[0], axis=0)
-    P3 = get_P(E_mu, m_mu, theta_mu, 0)
+    P3 = get_P(E_p, m_p, theta_p, 0)
     P4 = get_P(E_e, m_e, theta_e, np.pi)
     P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
-    theta_mu = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
+    theta_p = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
     theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
-    E_mu = P3[:,0]
+    E_p = P3[:,0]
     E_e = P4[:,0]
-    print('theta1 =', theta_mu[0])
+    print('theta1 =', theta_p[0])
     print('theta2 =', theta_e[0])
     print('E3 =', P3[0,0])
     print('P1 = ', P1[0])
@@ -55,7 +57,7 @@ for path in [
     print('P3 = ', P3[0])
     print('P4 = ', P4[0])
 
-    #theta_mu, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_mu, P1, P2, P3, P4))  # [DEBUG]
+    #theta_p, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_p, P1, P2, P3, P4))  # [DEBUG]
 
     g = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
     gamma = [
@@ -127,13 +129,13 @@ for path in [
         assert P1.shape[1] == P3.shape[1] == 4
         M_sc = sum(  # let e = 1
             np.sum(u1.conjugate() @ (gamma[0] @ gamma[i]) * u2, axis=1)
-            * (g[i,i] / lorentz_inner(*((P1[:,0:4] + P2[:,0:4],)*2)) *
+            * (g[i,i] / lorentz_inner(*((P1[:,0:4] + P2[:,0:4],)*2))) *
             np.sum(u4.conjugate() @ (gamma[0] @ gamma[i]) * u3, axis=1)
             for i in range(4)
         )
         M_tc = sum(  # let e = 1
             np.sum(u3.conjugate() @ (gamma[0] @ gamma[i]) * u1, axis=1)
-            * (g[i,i] / lorentz_inner(*((P1[:,0:4] - P3[:,0:4],)*2)) *
+            * (g[i,i] / lorentz_inner(*((P1[:,0:4] - P3[:,0:4],)*2))) *
             np.sum(u4.conjugate() @ (gamma[0] @ gamma[i]) * u2, axis=1)
             for i in range(4)
         )
@@ -172,17 +174,17 @@ for path in [
     concurrence = eigenvalues[:,-1] - np.sum(eigenvalues[:,:-1], axis=1)
     concurrence = np.maximum(concurrence, 0)
 
-    data = np.array([theta_mu, theta_e, concurrence]).T
+    data = np.array([theta_p, theta_e, concurrence]).T
     data = data[data[:,0].argsort()]
     data = np.concatenate([data[-1:], data[:-1]])
-    data = data[data[:,0] >= np.pi / 2]
-    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-5, vmax=1),
-         #label=r'$E_\mu$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (muon_energy, lepton_pt, lepton_eta))
-         label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (muon_energy, lepton_eta, offset))
+    #data = data[data[:,0] >= np.pi / 2]
+    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-2, vmax=1),
+         #label=r'$E_{e^+}$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (positron_energy, lepton_pt, lepton_eta))
+         label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
     offset += 1
 
-plt.xlabel(r'$\theta^\prime_\mu$ (center of mass frame)')
-plt.ylabel(r'$\theta^\prime_e$')
+plt.xlabel(r'$\theta^\prime_{e^+}$ (center of mass frame)')
+plt.ylabel(r'$\theta^\prime_{e^-}$')
 plt.legend()
 plt.grid()
 plt.colorbar()
