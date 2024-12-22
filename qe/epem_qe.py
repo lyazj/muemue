@@ -1,12 +1,13 @@
 import re
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import colors
+from matplotlib import colors as mcolors
 
 # Optional maximum number of events to process.
 NEVENT_MAX = None
 COM_FRAME = True
 STACK = True
+BELL = True
 
 # Construct 4-momentum from (E, m, theta, phi).
 def get_P(E, m, theta, phi):
@@ -94,6 +95,9 @@ for path in [  # sample files
         np.array([[0, -1j], [1j, 0]]),
         np.array([[1, 0], [0, -1]]),
     ]
+    sigma_kron = np.array([[
+        np.kron(sigma[i], sigma[j]) for j in range(3)
+    ] for i in range(3)])
 
     # Compute inner product of two Lorentz vectors.
     def lorentz_inner(P1, P2):
@@ -207,26 +211,44 @@ for path in [  # sample files
     concurrence = eigenvalues[:,-1] - np.sum(eigenvalues[:,:-1], axis=1)
     concurrence = np.maximum(concurrence, 0)
 
+    if BELL:
+        corr = np.sum(sigma_kron.reshape(1, 3, 3, 16) * rho.transpose(0, 2, 1).reshape(-1, 1, 1, 16), axis=3)
+        print(corr[0])
+        eigenvalues = np.linalg.eigvals(corr.conjugate().transpose(0, 2, 1) @ corr).real
+        eigenvalues *= (np.abs(eigenvalues) >= 1e-10)
+        eigenvalues = np.sort(np.sqrt(eigenvalues), axis=1)
+        CHSH = 2 * np.sqrt(np.sum(eigenvalues[:,-2:], axis=1))
+        print('Efficiency:', np.mean(CHSH[concurrence > 0] > 2))
+
     # Plot concurrence as a function of theta_p and theta_e.
-    data = np.array([theta_p, theta_e, concurrence]).T
+    data = np.array([theta_p, theta_e, CHSH if BELL else concurrence]).T
     data = data[data[:,0].argsort()]
     data = np.concatenate([data[-1:], data[:-1]])
     if COM_FRAME:
         #data = data[data[:,0] >= np.pi / 2]
         pass
+    if BELL:
+        colors = cmap(mcolors.Normalize(vmin=2, vmax=2.8)(data[:,2]))
+        colors[data[:,2] <= 2] = [0.8, 0.8, 0.8, 1]
 
     if STACK:
-        plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-2, vmax=1),
-             #label=r'$E_{e^+}$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (positron_energy, lepton_pt, lepton_eta))
-             label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+        if BELL:
+            plt.scatter(data[:,0], data[:,1] + offset, c=colors,
+                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+        else:
+            plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1),
+                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
         if COM_FRAME:
             offset += 1
         else:
             offset += 0.5
     else:
-        plt.scatter(data[:,0], data[:,1], c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-2, vmax=1),
-             #label=r'$E_{e^+}$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (positron_energy, lepton_pt, lepton_eta))
-             label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+        if BELL:
+            plt.scatter(data[:,0], data[:,1], c=colors,
+                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+        else:
+            plt.scatter(data[:,0], data[:,1], c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1),
+                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
         if COM_FRAME:
             plt.xlabel(r'$\theta^\prime_{e^+}$ [rad] (center of mass frame)')
             plt.ylabel(r'$\theta^\prime_{e^-}$ [rad]')
@@ -236,9 +258,12 @@ for path in [  # sample files
         plt.legend()
         plt.grid()
         cbar = plt.colorbar()
-        cbar.set_label(r'Concurrence $\mathcal{C}(\rho_f)$')
+        cbar.set_label(r'Optimal CHSH value $I_2$' if BELL else r'Concurrence $\mathcal{C}(\rho_f)$')
+        if BELL:
+            cbar.set_ticks(np.linspace(0, 1, 9))
+            cbar.set_ticklabels(map(lambda x: '%.2f' % x, np.linspace(2, 2.8, 9)))
         plt.tight_layout()
-        plt.savefig(path.replace('.txt', ('_com' if COM_FRAME else '_lab') + '.png'))
+        plt.savefig(path.replace('.txt', ('_CHSH' if BELL else '') + ('_com' if COM_FRAME else '_lab') + '.png'))
         plt.clf()
 
 if STACK:
@@ -251,6 +276,9 @@ if STACK:
     plt.legend()
     plt.grid()
     cbar = plt.colorbar()
-    cbar.set_label(r'Concurrence $\mathcal{C}(\rho_f)$')
+    if BELL:
+        cbar.set_ticks(np.linspace(0, 1, 9))
+        cbar.set_ticklabels(map(lambda x: '%.2f' % x, np.linspace(2, 2.8, 9)))
+    cbar.set_label(r'Optimal CHSH value $I_2$' if BELL else r'Concurrence $\mathcal{C}(\rho_f)$')
     plt.tight_layout()
-    plt.savefig(__file__.replace('.py', ('_com' if COM_FRAME else '_lab') + '.png'))
+    plt.savefig(__file__.replace('.py', ('_CHSH' if BELL else '') + ('_com' if COM_FRAME else '_lab') + '.png'))
