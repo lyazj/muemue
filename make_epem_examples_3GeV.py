@@ -8,14 +8,14 @@ epem_card = MG5Card.MG5Card('cards/epem.dat')
 pool = multiprocessing.Pool(6)
 
 args = []
-positron_energy = 1.0  # GeV
+positron_energy = 3.0  # GeV
 for min_lepton_pt in np.array([  # GeV
     0.0,
 ]):
     for min_lepton_eta in np.array([
         #1.0,
-        1.7,
-        #2.0,
+        2.0,
+        #3.0,
     ]):
         repeat = 1
         for r in range(repeat):
