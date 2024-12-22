@@ -5,6 +5,7 @@ from matplotlib import colors
 
 # Optional maximum number of events to process.
 NEVENT_MAX = None
+COM_FRAME = STACK = True
 
 # Construct 4-momentum from (E, m, theta, phi).
 def get_P(E, m, theta, phi):
@@ -27,7 +28,7 @@ for path in [  # sample files
     'epem_example_1.0GeV_pT_0.00e+00GeV_eta_3.00e+00.txt',
     'epem_example_1.0GeV_pT_0.00e+00GeV_eta_4.00e+00.txt',
 ]:
-    # Incoming beam energy and generate cuts.
+    # Incoming beam energy and generator cuts.
     positron_energy, lepton_pt, lepton_eta = map(float,
         re.search(r'_([0-9.e+-]*)GeV_pT_([0-9.e+-]*)GeV_eta_([0-9.e+-]*)\.txt', path).groups())
 
@@ -62,14 +63,14 @@ for path in [  # sample files
     # Recoiled particle.
     P4 = get_P(E_e, m_e, theta_e, np.pi)
 
-    # Transform to the center of mass frame.
-    P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
-
-    # In the case of in a transformed frame, recompute observables.
-    theta_p = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
-    theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
-    E_p = P3[:,0]
-    E_e = P4[:,0]
+    if COM_FRAME:
+        # Transform to the center of mass frame.
+        P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
+        # In the case of in a transformed frame, recompute observables.
+        theta_p = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
+        theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
+        E_p = P3[:,0]
+        E_e = P4[:,0]
 
     print('theta1 =', theta_p[0])
     print('theta2 =', theta_e[0])
@@ -210,17 +211,41 @@ for path in [  # sample files
     # Plot concurrence as a function of theta_p and theta_e.
     data = np.array([theta_p, theta_e, concurrence]).T
     data = data[data[:,0].argsort()]
-    data = np.concatenate([data[-1:], data[:-1]])
-    #data = data[data[:,0] >= np.pi / 2]
-    plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-2, vmax=1),
-         #label=r'$E_{e^+}$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (positron_energy, lepton_pt, lepton_eta))
-         label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
-    offset += 1
+    if COM_FRAME:
+        data = np.concatenate([data[-1:], data[:-1]])
+        #data = data[data[:,0] >= np.pi / 2]
 
-plt.xlabel(r'$\theta^\prime_{e^+}$ (center of mass frame)')
-plt.ylabel(r'$\theta^\prime_{e^-}$')
-plt.legend()
-plt.grid()
-plt.colorbar()
-plt.tight_layout()
-plt.savefig(__file__.replace('.py', '.png'))
+    if STACK:
+        plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-2, vmax=1),
+             #label=r'$E_{e^+}$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (positron_energy, lepton_pt, lepton_eta))
+             label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+        offset += 1
+    else:
+        plt.scatter(data[:,0], data[:,1], c=data[:,2], cmap=cmap, norm=colors.LogNorm(vmin=1e-2, vmax=1),
+             #label=r'$E_{e^+}$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (positron_energy, lepton_pt, lepton_eta))
+             label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+        if COM_FRAME:
+            plt.xlabel(r'$\theta^\prime_{e^+}$ (center of mass frame)')
+            plt.ylabel(r'$\theta^\prime_{e^-}$')
+        else:
+            plt.xlabel(r'$\theta_{e^+}$ (lab frame)')
+            plt.ylabel(r'$\theta_{e^-}$')
+        plt.legend()
+        plt.grid()
+        plt.colorbar()
+        plt.tight_layout()
+        plt.savefig(path.replace('.txt', '.png'))
+        plt.clf()
+
+if STACK:
+    if COM_FRAME:
+        plt.xlabel(r'$\theta^\prime_{e^+}$ (center of mass frame)')
+        plt.ylabel(r'$\theta^\prime_{e^-}$')
+    else:
+        plt.xlabel(r'$\theta_{e^+}$ (lab frame)')
+        plt.ylabel(r'$\theta_{e^-}$')
+    plt.legend()
+    plt.grid()
+    plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(__file__.replace('.py', '.png'))
