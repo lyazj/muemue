@@ -211,12 +211,17 @@ for path in [  # sample files
     concurrence = eigenvalues[:,-1] - np.sum(eigenvalues[:,:-1], axis=1)
     concurrence = np.maximum(concurrence, 0)
     print('Positron energy:', positron_energy)
-    print('Max concurrence:', np.max(concurrence))
     print('Efficiency:', np.mean(concurrence > 0))
+    print('Max concurrence:', np.max(concurrence))
     print('Min theta_p:', np.min(theta_p[concurrence > 0]))
     print('Min theta_e:', np.min(theta_e[concurrence > 0]))
     print('Min E_p:', np.min(E_p[concurrence > 0]))
     print('Min E_e:', np.min(E_e[concurrence > 0]))
+    print('Max concurrence [0.05, 0.10]:', np.max(concurrence[np.logical_and(theta_p >= 0.05, theta_p <= 0.10)]))
+    print('Min theta_p [0.05, 0.10]:', np.min(theta_p[np.logical_and(np.logical_and(theta_p >= 0.05, theta_p <= 0.10), concurrence > 0)]))
+    print('Min theta_e [0.05, 0.10]:', np.min(theta_e[np.logical_and(np.logical_and(theta_p >= 0.05, theta_p <= 0.10), concurrence > 0)]))
+    print('Min E_p [0.05, 0.10]:', np.min(E_p[np.logical_and(np.logical_and(theta_p >= 0.05, theta_p <= 0.10), concurrence > 0)]))
+    print('Min E_e [0.05, 0.10]:', np.min(E_e[np.logical_and(np.logical_and(theta_p >= 0.05, theta_p <= 0.10), concurrence > 0)]))
 
     if BELL:
         corr = np.sum(sigma_kron.reshape(1, 3, 3, 16) * rho.transpose(0, 2, 1).reshape(-1, 1, 1, 16), axis=3)
@@ -227,6 +232,7 @@ for path in [  # sample files
         CHSH = 2 * np.sqrt(np.sum(eigenvalues[:,-2:], axis=1))
         print('Efficiency:', np.mean(CHSH[concurrence > 0] > 2))
         print('Max CHSH:', np.max(CHSH))
+        print('Min CHSH [0.05, 0.10]:', np.min(CHSH[np.logical_and(theta_p >= 0.05, theta_p <= 0.10)]))
 
     # Plot concurrence as a function of theta_p and theta_e.
     data = np.array([theta_p, theta_e, CHSH if BELL else concurrence]).T
@@ -242,21 +248,21 @@ for path in [  # sample files
     if STACK:
         if BELL:
             plt.scatter(data[:,0], data[:,1] + offset, c=colors,
-                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
         else:
             plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1),
-                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
         if COM_FRAME:
             offset += 1
         else:
-            offset += 0.5
+            offset += 0.1
     else:
         if BELL:
             plt.scatter(data[:,0], data[:,1], c=colors,
-                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
         else:
             plt.scatter(data[:,0], data[:,1], c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1),
-                 label=r'$E_{e^+}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
         if COM_FRAME:
             plt.xlabel(r'$\theta^\prime_{e^+}$ [rad] (center of mass frame)')
             plt.ylabel(r'$\theta^\prime_{e^-}$ [rad]')
