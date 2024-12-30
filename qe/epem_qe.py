@@ -212,6 +212,7 @@ for path in [  # sample files
     concurrence = np.maximum(concurrence, 0)
     print('Positron energy:', positron_energy)
     print('Efficiency:', np.mean(concurrence > 0))
+    print('Efficiency [0.05, 0.10]:', np.mean(np.logical_and(np.logical_and(theta_p >= 0.05, theta_p <= 0.10), concurrence > 0)))
     print('Max concurrence:', np.max(concurrence))
     print('Min theta_p:', np.min(theta_p[concurrence > 0]))
     print('Min theta_e:', np.min(theta_e[concurrence > 0]))
