@@ -2,7 +2,7 @@
 
 import model sm-lepton_masses
 
-generate e-{$SUB:incoming_polarization} e-{$SUB:electron_polarization} > e- e- / z h
+generate e-{$SUB:incoming_polarization} e- > e- e- / z h
 output $SUB:workdir
 launch
 

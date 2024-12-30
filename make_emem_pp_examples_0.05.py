@@ -21,12 +21,12 @@ for min_lepton_pt in np.array([  # GeV
     ]):
         r = 0
         for incoming_polarization in 'LR':
-            for electron_polarization in 'LR':
-                args.append({
-                    'workdir': f'emem_{incoming_polarization}{electron_polarization}_example_{incoming_energy:.3f}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}_{r}',
-                    'nevent': 100000, 'seed': r, 'electron_energy': 0.000511,  # GeV
-                    'incoming_energy': incoming_energy,
-                    'min_lepton_pt': min_lepton_pt, 'min_lepton_com_energy': -1.0, 'min_lepton_eta': min_lepton_eta,
-                    'incoming_polarization': incoming_polarization, 'electron_polarization': electron_polarization,
-                })
+            electron_polarization = 'U'
+            args.append({
+                'workdir': f'emem_{incoming_polarization}{electron_polarization}_example_{incoming_energy:.3f}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}_{r}',
+                'nevent': 100000, 'seed': r, 'electron_energy': 0.000511,  # GeV
+                'incoming_energy': incoming_energy,
+                'min_lepton_pt': min_lepton_pt, 'min_lepton_com_energy': -1.0, 'min_lepton_eta': min_lepton_eta,
+                'incoming_polarization': incoming_polarization,
+            })
 pool.map(emem_pp_card.run, args)
