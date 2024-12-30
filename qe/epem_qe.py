@@ -233,7 +233,7 @@ for path in [  # sample files
         CHSH = 2 * np.sqrt(np.sum(eigenvalues[:,-2:], axis=1))
         print('Efficiency:', np.mean(CHSH[concurrence > 0] > 2))
         print('Max CHSH:', np.max(CHSH))
-        print('Min CHSH [0.05, 0.10]:', np.min(CHSH[np.logical_and(theta_p >= 0.05, theta_p <= 0.10)]))
+        print('Min CHSH [0.05, 0.10]:', np.max(CHSH[np.logical_and(theta_p >= 0.05, theta_p <= 0.10)]))
 
     # Plot concurrence as a function of theta_p and theta_e.
     data = np.array([theta_p, theta_e, CHSH if BELL else concurrence]).T

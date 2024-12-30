@@ -91,6 +91,6 @@ for positron_energy_expected in sorted(set(param[2] for param in params)):
 
 for param in params:
     positron_polarization, electron_polarization, positron_energy, min_lepton_pt, min_lepton_eta = param
-    with open(f'epem_example_{positron_polarization}{electron_polarization}_{positron_energy}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}.txt', 'w') as file:
+    with open(f'epem_example_{positron_polarization}{electron_polarization}_{positron_energy:.3f}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}.txt', 'w') as file:
         for theta, E in zip(data['theta'][param], data['E'][param]):
             print(' '.join(['%.18e'] * 4) % (*theta, *E), file=file)
