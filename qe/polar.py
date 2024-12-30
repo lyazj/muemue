@@ -2,10 +2,12 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
+import loader
+from get_p import get_p
 
 # Optional maximum number of events to process.
-NEVENT_MAX = None
-COM_FRAME = False
+NEVENT_MAX = 100
+COM_FRAME = True
 STACK = True
 BELL = True
 
@@ -19,61 +21,36 @@ def get_P(E, m, theta, phi):
         p * np.cos(theta),
     ]).T
 
-def load(path):
-    # Incoming beam energy and generator cuts.
-    incoming_energy, lepton_pt, lepton_eta = map(float,
-        re.search(r'_([0-9.e+-]*)GeV_pT_([0-9.e+-]*)GeV_eta_([0-9.e+-]*)\.txt', path).groups())
-
-    # Scattering particle masses.
-    m_p = 0.511e-3
-    m_e = 0.511e-3
-
-    # Lorentz transformation.
-    gamma = (incoming_energy + m_e) / np.sqrt(m_p**2 + m_e**2 + 2*m_e*incoming_energy)
-    beta = np.sqrt(1 - 1 / gamma**2)
-    def lab_to_com(P):
-        P0 = gamma * (P[:,0] - beta * P[:,3])
-        P3 = gamma * (P[:,3] - beta * P[:,0])
-        P[:,0] = P0
-        P[:,3] = P3
-        return P
-
-    # Scattering particle masses.
-    m_1 = 0.511e-3
-    m_2 = 0.511e-3
-
-    # Read observables from the sample file.
-    theta_1, theta_2, E_1, E_2 = np.array(
-        open(path).read().strip().split(), dtype='float'
-    ).reshape(-1, 4)[:(NEVENT_MAX if NEVENT_MAX else int(1e20))].T
-
-    # Incoming beam.
-    P1 = np.repeat(get_P(incoming_energy, m_1, 0, 0).reshape(1, 4), E_1.shape[0], axis=0)
+def load(path, pid):
+    # Outgoing beams.
+    P3, P4 = loader.load(path, pid, NEVENT_MAX)
+    m3 = np.mean(np.sqrt(P3[:,0]**2 - np.sum(P3[:,1:]**2, axis=1)))
+    m4 = np.mean(np.sqrt(P4[:,0]**2 - np.sum(P4[:,1:]**2, axis=1)))
 
     # Target particle.
-    P2 = np.repeat(get_P(m_2, m_2, 0, 0).reshape(1, 4), E_2.shape[0], axis=0)
+    P2 = np.repeat(get_P(m4, m4, 0, 0).reshape(1, 4), P4.shape[0], axis=0)
 
-    # Outgoing beam.
-    P3 = get_P(E_1, m_1, theta_1, 0)
-
-    # Recoiled particle.
-    P4 = get_P(E_2, m_2, theta_2, np.pi)
+    # Incoming beam.
+    P1 = P3 + P4 - P2
 
     if COM_FRAME:
-        # Transform to the center of mass frame.
+        incoming_energy = np.mean(P1[:,0])
+        gamma = (incoming_energy + m4) / np.sqrt(m3**2 + m4**2 + 2*m4*incoming_energy)
+        beta = np.sqrt(1 - 1 / gamma**2)
+        def lab_to_com(P):
+            P0 = gamma * (P[:,0] - beta * P[:,3])
+            P3 = gamma * (P[:,3] - beta * P[:,0])
+            P[:,0] = P0
+            P[:,3] = P3
+            return P
         P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
-        ## In the case of in a transformed frame, recompute observables.
-        #theta_1 = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
-        #theta_2 = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
-        #E_1 = P3[:,0]
-        #E_2 = P4[:,0]
+
     return P1, P2, P3, P4
 
 def load_pair(epem_path, emem_path):
-    P3, P5, P7, P8 = load(epem_path)
-    P4, P6, P9, P10 = load(emem_path)
+    P3, P5, P7, P8 = load(epem_path, [-11, 11])
+    P4, P6, P9, P10 = load(emem_path, [11, 11])
     return P3, P4, P5, P6, P7, P8, P9, P10
-
 
 # Metric, Dirac gamma matrices, and Pauli matrices.
 g = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
@@ -209,7 +186,8 @@ def rho_P_Bhabha(P1, P2, P3, P4):
                     rho[:,i,j] += M[:,i] * M[:,j].conjugate()
     # Normalize rho.
     rho /= np.trace(rho, axis1=1, axis2=2).reshape(-1, 1, 1)
-    print(rho[:1])
+    #print(rho[:1])
+    #print('trace:', rho[:1].trace(axis1=1, axis2=2))
     return rho
 
 # Construct density matrix from 4-momenta.
@@ -239,7 +217,8 @@ def rho_P_Moller(P1, P2, P3, P4):
                     rho[:,i,j] += M[:,i] * M[:,j].conjugate()
     # Normalize rho.
     rho /= np.trace(rho, axis1=1, axis2=2).reshape(-1, 1, 1)
-    print(rho[:1])
+    #print(rho[:1])
+    #print('trace:', rho[:1].trace(axis1=1, axis2=2))
     return rho
 
 def rho_P_sec(P3, P4, P5, P6, P7, P8, P9, P10):
@@ -251,7 +230,10 @@ def rho_P_sec(P3, P4, P5, P6, P7, P8, P9, P10):
             for k in range(2):
                 for l in range(2):
                     rho[:,i,j,k,l] = rho_Bhabha[:,i,k] * rho_Moller[:,j,l]
-    return rho.reshape(-1, 4, 4)
+    rho = rho.reshape(-1, 4, 4)
+    print(rho[:1])
+    print('trace:', rho[:1].trace(axis1=1, axis2=2))
+    return rho
 
 def Y(l, m, theta, phi):
     if l == 0:
@@ -266,22 +248,13 @@ def Y(l, m, theta, phi):
             return -np.sqrt(3 / (8 * np.pi)) * np.sin(theta) * np.exp(1j * phi)
     raise ValueError('invalid l or m')
 
-def LHS(l7, m7, l9, m9, P3, P4, P5, P6, P7, P8, P9, P10):
-    theta_7 = np.arctan2(np.hypot(P7[:,1], P7[:,2]), P7[:,3])
-    phi_7 = np.arctan2(P7[:,2], P7[:,1])
-    theta_9 = np.arctan2(np.hypot(P9[:,1], P9[:,2]), P9[:,3])
-    phi_9 = np.arctan2(P9[:,2], P9[:,1])
-    return np.mean(Y(l7, m7, theta_7, phi_7) * Y(l9, m9, theta_9, phi_9))
-
-def RHS(l7, m7, l9, m9, P3, P4, P5, P6, P7, P8, P9, P10):
-    theta_7 = np.arctan2(np.hypot(P7[:,1], P7[:,2]), P7[:,3])
-    phi_7 = np.arctan2(P7[:,2], P7[:,1])
-    theta_9 = np.arctan2(np.hypot(P9[:,1], P9[:,2]), P9[:,3])
-    phi_9 = np.arctan2(P9[:,2], P9[:,1])
-    rho = rho_P_sec(P3, P4, P5, P6, P7, P8, P9, P10)
-    return np.mean(rho * (Y(l7, m7, theta_7, phi_7) * Y(l9, m9, theta_9, phi_9)).reshape(-1, 1, 1), axis=0)
-
 def rho_P(P3, P4, P5, P6, P7, P8, P9, P10):
+    rho = rho_P_sec(P3, P4, P5, P6, P7, P8, P9, P10)
+    theta_7 = np.arctan2(np.hypot(P7[:,1], P7[:,2]), P7[:,3])
+    phi_7 = np.arctan2(P7[:,2], P7[:,1])
+    theta_9 = np.arctan2(np.hypot(P9[:,1], P9[:,2]), P9[:,3])
+    phi_9 = np.arctan2(P9[:,2], P9[:,1])
+
     lhs = np.empty((16), dtype='complex')
     rhs = np.empty((16, 16), dtype='complex')
     i = 0
@@ -289,13 +262,49 @@ def rho_P(P3, P4, P5, P6, P7, P8, P9, P10):
         for m7 in range(-l7, l7 + 1):
             for l9 in [0, 1]:
                 for m9 in range(-l9, l9 + 1):
-                    lhs[i] = LHS(l7, m7, l9, m9, P3, P4, P5, P6, P7, P8, P9, P10)
-                    rhs[i] = RHS(l7, m7, l9, m9, P3, P4, P5, P6, P7, P8, P9, P10).reshape(16)
+                    weight = Y(l7, m7, theta_7, phi_7) * Y(l9, m9, theta_9, phi_9) * np.sin(theta_7) * np.sin(theta_9)
+                    lhs[i] = np.mean(weight)
+                    rhs[i] = np.mean(rho.reshape(-1, 16) * weight.reshape(-1, 1), axis=0)
+                    print('rhs-%d:' % i, rhs[i], sep='\n')
                     i += 1
-    return (np.linalg.inv(rhs) @ lhs).reshape(4, 4)
+    print('lhs:', lhs, sep='\n')
+    print('rhs-eigen:', np.linalg.eigvals(rhs), sep='\n')
+    rho = (np.linalg.inv(rhs) @ lhs).reshape(4, 4) / np.square(2 / (4 * np.pi))
+    print('rho:', rho, sep='\n')
+    print('rho-trace:', rho.trace())
+    return rho
 
+#def rotate_to(R, Ps):
+#    theta = np.arctan2(np.hypot(R[1], R[2]), R[3])
+#    phi = np.arctan2(R[2], R[1])
+#    r = np.array([
+#        [np.cos(phi), -np.sin(phi), 0],
+#        [np.sin(phi),  np.cos(phi), 0],
+#        [          0,            0, 1],
+#    ]) @ np.array([
+#        [ np.cos(theta), 0, np.sin(theta)],
+#        [ 0,             1,             0],
+#        [-np.sin(theta), 0, np.cos(theta)],
+#    ])
+#    for P in Ps:
+#        P[:,1:4] = P[:,1:4] @ r.T
+
+#theta_p_lab = 0.05
+#P3_lab, P4_lab = get_p(theta_p_lab)
+#print('P3:', P3_lab)
+#print('P4:', P4_lab)
 P3, P4, P5, P6, P7, P8, P9, P10 = load_pair(*[  # LL
-    './epem_example_LU_0.290GeV_pT_0.00e+00GeV_eta_1.00e+00.txt',
-    './emem_example_LU_0.711GeV_pT_0.00e+00GeV_eta_1.00e+00.txt',
+    '../epem_LU_example_0.290GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+    '../emem_LU_example_0.711GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
 ])
-rho = rho_P(P3, P4, P5, P6, P7, P8, P9, P10) / np.square(2 / (4 * np.pi))
+#rotate_to(P3_lab, [P3, P5, P7, P8])
+#rotate_to(P4_lab, [P4, P6, P9, P10])
+print('P3:' , P3[0])
+print('P4:' , P4[0])
+print('P5:' , P5[0])
+print('P6:' , P6[0])
+print('P7:' , P7[0])
+print('P8:' , P8[0])
+print('P9:' , P9[0])
+print('P10:', P10[0])
+rho = rho_P(P3, P4, P5, P6, P7, P8, P9, P10)
