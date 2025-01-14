@@ -6,7 +6,7 @@ import loader
 from get_p import get_p
 
 # Optional maximum number of events to process.
-NEVENT_MAX = 100
+NEVENT_MAX = None
 COM_FRAME = True
 STACK = True
 BELL = True
@@ -165,7 +165,7 @@ def rho_P_Bhabha(P1, P2, P3, P4):
     u2s, u4s = map(lambda P: [u_PH(P, 1), u_PH(P, -1)], (P2, P4))
     #print(*u1s, *u2s, *u3s, *u4s, sep='\n')
     rho = np.zeros((P1.shape[0], 4, 4), dtype='complex')
-    # Sum rho over initial state spin states.
+    # Sum rho over final state spin states.
     for k in range(2):
         u3 = u3s[k]
         for l in range(2):
@@ -196,7 +196,7 @@ def rho_P_Moller(P1, P2, P3, P4):
     u2s, u4s = map(lambda P: [u_PH(P, 1), u_PH(P, -1)], (P2, P4))
     #print(*u1s, *u2s, *u3s, *u4s, sep='\n')
     rho = np.zeros((P1.shape[0], 4, 4), dtype='complex')
-    # Sum rho over initial state spin states.
+    # Sum rho over final state spin states.
     for k in range(2):
         u3 = u3s[k]
         for l in range(2):
@@ -222,8 +222,10 @@ def rho_P_Moller(P1, P2, P3, P4):
     return rho
 
 def rho_P_sec(P3, P4, P5, P6, P7, P8, P9, P10):
-    rho_Bhabha = rho_P_Bhabha(P3, P5, P7, P8).reshape(-1, 2, 2, 2, 2).trace(axis1=2, axis2=4)  # 3', 3
-    rho_Moller = rho_P_Moller(P4, P6, P9, P10).reshape(-1, 2, 2, 2, 2).trace(axis1=2, axis2=4)  # 4', 4
+    #rho_Bhabha = rho_P_Bhabha(P3, P5, P7, P8).reshape(-1, 2, 2, 2, 2).trace(axis1=2, axis2=4)  # 3', 3
+    #rho_Moller = rho_P_Moller(P4, P6, P9, P10).reshape(-1, 2, 2, 2, 2).trace(axis1=2, axis2=4)  # 4', 4
+    rho_Bhabha = rho_P_Bhabha(P3, P5, P7, P8).reshape(-1, 2, 2, 2, 2)[:,:,1,:,1]  # 3', 3
+    rho_Moller = rho_P_Moller(P4, P6, P9, P10).reshape(-1, 2, 2, 2, 2)[:,:,1,:,1]  # 4', 4
     rho = np.empty((P3.shape[0], 2, 2, 2, 2), dtype='complex')  # 3', 4', 3, 4
     for i in range(2):
         for j in range(2):
@@ -231,7 +233,8 @@ def rho_P_sec(P3, P4, P5, P6, P7, P8, P9, P10):
                 for l in range(2):
                     rho[:,i,j,k,l] = rho_Bhabha[:,i,k] * rho_Moller[:,j,l]
     rho = rho.reshape(-1, 4, 4)
-    print(rho[:1])
+    rho /= rho.trace(axis1=1, axis2=2).reshape(-1, 1, 1)
+    print(rho[:3])
     print('trace:', rho[:1].trace(axis1=1, axis2=2))
     return rho
 
@@ -262,14 +265,15 @@ def rho_P(P3, P4, P5, P6, P7, P8, P9, P10):
         for m7 in range(-l7, l7 + 1):
             for l9 in [0, 1]:
                 for m9 in range(-l9, l9 + 1):
-                    weight = Y(l7, m7, theta_7, phi_7) * Y(l9, m9, theta_9, phi_9) * np.sin(theta_7) * np.sin(theta_9)
+                    weight = Y(l7, m7, theta_7, phi_7) * Y(l9, m9, theta_9, phi_9)
                     lhs[i] = np.mean(weight)
                     rhs[i] = np.mean(rho.reshape(-1, 16) * weight.reshape(-1, 1), axis=0)
                     print('rhs-%d:' % i, rhs[i], sep='\n')
                     i += 1
     print('lhs:', lhs, sep='\n')
     print('rhs-eigen:', np.linalg.eigvals(rhs), sep='\n')
-    rho = (np.linalg.inv(rhs) @ lhs).reshape(4, 4) / np.square(2 / (4 * np.pi))
+    rho = (np.linalg.inv(rhs) @ lhs).reshape(4, 4)
+    rho /= rho.trace()
     print('rho:', rho, sep='\n')
     print('rho-trace:', rho.trace())
     return rho
@@ -294,8 +298,10 @@ def rho_P(P3, P4, P5, P6, P7, P8, P9, P10):
 #print('P3:', P3_lab)
 #print('P4:', P4_lab)
 P3, P4, P5, P6, P7, P8, P9, P10 = load_pair(*[  # LL
-    '../epem_LU_example_0.290GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
-    '../emem_LU_example_0.711GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+    #'../epem_LU_example_0.290GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+    #'../emem_LU_example_0.711GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+    '../epem_LL_example_0.290GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+    '../emem_LL_example_0.711GeV_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
 ])
 #rotate_to(P3_lab, [P3, P5, P7, P8])
 #rotate_to(P4_lab, [P4, P6, P9, P10])
@@ -307,4 +313,10 @@ print('P7:' , P7[0])
 print('P8:' , P8[0])
 print('P9:' , P9[0])
 print('P10:', P10[0])
+
+theta_7 = np.arctan2(np.hypot(P7[:,1], P7[:,2]), P7[:,3])
+theta_9 = np.arctan2(np.hypot(P9[:,1], P9[:,2]), P9[:,3])
+mask = np.logical_and(theta_7 > np.pi / 2, theta_9 > np.pi / 2)
+print('Efficiency:', mask.mean())
+for i in range(3, 11): exec(f'P{i} = P{i}[mask]')
 rho = rho_P(P3, P4, P5, P6, P7, P8, P9, P10)
