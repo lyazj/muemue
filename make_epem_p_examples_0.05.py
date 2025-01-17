@@ -24,7 +24,7 @@ for min_lepton_pt in np.array([  # GeV
             for electron_polarization in 'LR':
                 args.append({
                     'workdir': f'epem_{positron_polarization}{electron_polarization}_example_{positron_energy:.3f}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}_{r}',
-                    'nevent': 100000, 'seed': r, 'electron_energy': 0.000511,  # GeV
+                    'nevent': 1000000, 'seed': r, 'electron_energy': 0.000511,  # GeV
                     'positron_energy': positron_energy,
                     'min_lepton_pt': min_lepton_pt, 'min_lepton_com_energy': -1.0, 'min_lepton_eta': min_lepton_eta,
                     'positron_polarization': positron_polarization, 'electron_polarization': electron_polarization,
