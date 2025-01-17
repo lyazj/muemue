@@ -21,7 +21,7 @@ for min_lepton_pt in np.array([  # GeV
         for r in range(repeat):
             args.append({
                 'workdir': f'epem_example_{positron_energy}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}_{r}',
-                'nevent': 100000, 'seed': r, 'electron_energy': 0.000511,  # GeV
+                'nevent': 1000000, 'seed': r, 'electron_energy': 0.000511,  # GeV
                 'positron_energy': positron_energy,
                 'min_lepton_pt': min_lepton_pt, 'min_lepton_com_energy': -1.0, 'min_lepton_eta': min_lepton_eta,
             })
