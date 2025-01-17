@@ -4,24 +4,27 @@ import numpy as np
 import multiprocessing
 import MG5Card
 from get_p import get_p
+import numpy as np
 
 epem_p_card = MG5Card.MG5Card('cards/epem_p.dat')
 pool = multiprocessing.Pool(6)
-p_p, p_e = get_p(0.05)  # GeV
+points = np.load('epem_example_1.0GeV_pT_0.00e+00GeV_eta_1.70e+00.npz')['points']
+p_ps, p_es = np.array([get_p(point) for point in points]).transpose(1, 0, 2)
 
 args = []
-positron_energy = p_p[0]
-for min_lepton_pt in np.array([  # GeV
-    0.0,
-]):
-    for min_lepton_eta in np.array([
-        #0.1,
-        1.0,
-        #2.0,
+for p_p in p_ps:
+    positron_energy = p_p[0]
+    for min_lepton_pt in np.array([  # GeV
+        0.0,
     ]):
-        r = 0
-        for positron_polarization in 'LR':
-            for electron_polarization in 'LR':
+        for min_lepton_eta in np.array([
+            #0.1,
+            1.0,
+            #2.0,
+        ]):
+            r = 0
+            for positron_polarization in 'LR':
+                for electron_polarization in 'L':
                 args.append({
                     'workdir': f'epem_{positron_polarization}{electron_polarization}_example_{positron_energy:.3f}GeV_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}_{r}',
                     'nevent': 1000000, 'seed': r, 'electron_energy': 0.000511,  # GeV
