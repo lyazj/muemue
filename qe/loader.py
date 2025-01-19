@@ -12,7 +12,7 @@ fields = [
     'Particle.E',
 ]
 
-def load(path, pid, nevent=None):  # expect: pid=[11, 11] pid=[-11, 11]
+def load(path, pid, nevent=None, weight=False):  # expect: pid=[11, 11] pid=[-11, 11]
     tree = uproot.concatenate(path + ':LHEF', fields)
     if nevent: tree = tree[:nevent]
 
@@ -30,4 +30,7 @@ def load(path, pid, nevent=None):  # expect: pid=[11, 11] pid=[-11, 11]
         tree['Particle.Py'],
         tree['Particle.Pz'],
     ])  # [4, N, len(pid)]
-    return np.transpose(p, [2, 1, 0])  # [len(pid), N, 4]
+    p = np.transpose(p, [2, 1, 0])  # [len(pid), N, 4]
+
+    if weight: return p, tree['Event.Weight']
+    return p
