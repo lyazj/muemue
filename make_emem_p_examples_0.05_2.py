@@ -24,7 +24,7 @@ for p_e, theta_p in zip(p_es, theta_ps):
         ]):
             r = 0
             for incoming_polarization in 'LR':
-                for electron_polarization in 'L':
+                for electron_polarization in 'LR':
                     args.append({
                         'workdir': f'emem_{incoming_polarization}{electron_polarization}_example_{theta_p:.4f}rad_pT_{min_lepton_pt:.2e}GeV_eta_{min_lepton_eta:.2e}_{r}',
                         'nevent': 100000, 'seed': r, 'electron_energy': 0.000511,  # GeV
