@@ -4,6 +4,8 @@ import matplotlib.colors as mcolors
 import loader
 
 # Optional maximum number of events to process.
+POLAR = 0.10
+assert 0.0 <= POLAR <= 1.0
 NEVENT_MAX = None
 COM_FRAME = True
 
@@ -55,22 +57,23 @@ plt.figure(figsize=(4, 3), dpi=300)
 for pp in 'LR':
     for pm in 'LR':
         theta_7s, theta_9s, Ws = [], [], []
-        for theta_3, W12 in zip(points, weights):
-            P3, P4, P5, P6, P7, P8, P9, P10, W34 = load_pair(*[
-                f'../epem_{pp}L_example_{theta_3:.4f}rad_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
-                f'../emem_{pm}L_example_{theta_3:.4f}rad_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
-            ])
-            print('%.4f' % theta_3, W12, W34[0,0])
-            theta_7 = np.arctan2(np.hypot(P7[:,1], P7[:,2]), P7[:,3])
-            theta_9 = np.arctan2(np.hypot(P9[:,1], P9[:,2]), P9[:,3])
-            W = W12 * W34[0,0] * np.ones_like(theta_7)
-            theta_7s.append(theta_7); theta_9s.append(theta_9); Ws.append(W)
-        theta_7, theta_9, W = map(np.concatenate, (theta_7s, theta_9s, Ws))
+        for pt, Wpt in zip('LR', [1 + POLAR, 1 - POLAR]):
+            for theta_3, W12 in zip(points, weights):
+                P3, P4, P5, P6, P7, P8, P9, P10, W34 = load_pair(*[
+                    f'../epem_{pp}{pt}_example_{theta_3:.4f}rad_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+                    f'../emem_{pm}{pt}_example_{theta_3:.4f}rad_pT_0.00e+00GeV_eta_1.00e+00_0/Events/run_01/unweighted_events.root',
+                ])
+                print(pp, pm, pt, '%.4f' % theta_3, W12, W34[0,0], Wpt)
+                theta_7 = np.arctan2(np.hypot(P7[:,1], P7[:,2]), P7[:,3])
+                theta_9 = np.arctan2(np.hypot(P9[:,1], P9[:,2]), P9[:,3])
+                W = W12 * W34[0,0] * Wpt * np.ones_like(theta_7)
+                theta_7s.append(theta_7); theta_9s.append(theta_9); Ws.append(W)
+            theta_7, theta_9, W = map(np.concatenate, (theta_7s, theta_9s, Ws))
         plt.hist2d(theta_7, theta_9, bins=100, weights=W, density=True, norm=mcolors.LogNorm())
         plt.xlabel(r'$\theta_7$ [rad]')
         plt.ylabel(r'$\theta_9$ [rad]')
         cbar = plt.colorbar()
-        cbar.set_label(f'{pp}{pm}-incident distribution [$\\mathrm{{rad}}^{{-2}}$]')
+        cbar.set_label(f'{pp}{pm}, {POLAR * 100:.0f}% L-polarized targets')
         plt.tight_layout()
         plt.savefig(f'{pp}{pm}.png')
         plt.clf()
