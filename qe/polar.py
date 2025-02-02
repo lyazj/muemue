@@ -112,17 +112,17 @@ def v_PH(P, H):
     m = np.sqrt(E*E - p*p)  # static mass
     if H == 1:
         return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
-            p / (m + E) * np.sin(theta/2),
-            -p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
-            np.sin(theta/2),
-            -np.exp(1j * phi) * np.cos(theta/2),
+            p / (m + E) * np.cos(theta/2),
+            p / (m + E) * np.exp(1j * phi) * np.sin(theta/2),
+            np.cos(theta/2),
+            np.exp(1j * phi) * np.sin(theta/2),
         ]).T
     elif H == -1:
         return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
-            -p / (m + E) * np.cos(theta/2),
-            -p / (m + E) * np.exp(1j * phi) * np.sin(theta/2),
-            np.cos(theta/2),
-            np.exp(1j * phi) * np.sin(theta/2),
+            -p / (m + E) * np.sin(theta/2),
+            p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
+            np.sin(theta/2),
+            -np.exp(1j * phi) * np.cos(theta/2),
         ]).T
 
 # Compute scattering amplitude matrix element from spinors and 4-momenta.

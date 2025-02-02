@@ -80,7 +80,7 @@ for path in [  # sample files
     print('P3 = ', P3[0])
     print('P4 = ', P4[0])
 
-    #theta_p, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_p, P1, P2, P3, P4))  # [DEBUG]
+    #theta_p, theta_e, E_p, E_e, P1, P2, P3, P4 = map(lambda x: x[:1], (theta_p, theta_e, E_p, E_e, P1, P2, P3, P4))  # [DEBUG]
 
     # Metric, Dirac gamma matrices, and Pauli matrices.
     g = np.array([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, -1]])
@@ -142,17 +142,17 @@ for path in [  # sample files
         m = np.sqrt(E*E - p*p)  # static mass
         if H == 1:
             return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
-                p / (m + E) * np.sin(theta/2),
-                -p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
-                np.sin(theta/2),
-                -np.exp(1j * phi) * np.cos(theta/2),
+                p / (m + E) * np.cos(theta/2),
+                p / (m + E) * np.exp(1j * phi) * np.sin(theta/2),
+                np.cos(theta/2),
+                np.exp(1j * phi) * np.sin(theta/2),
             ]).T
         elif H == -1:
             return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
-                -p / (m + E) * np.cos(theta/2),
-                -p / (m + E) * np.exp(1j * phi) * np.sin(theta/2),
-                np.cos(theta/2),
-                np.exp(1j * phi) * np.sin(theta/2),
+                -p / (m + E) * np.sin(theta/2),
+                p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
+                np.sin(theta/2),
+                -np.exp(1j * phi) * np.cos(theta/2),
             ]).T
 
     # Compute scattering amplitude matrix element from spinors and 4-momenta.
