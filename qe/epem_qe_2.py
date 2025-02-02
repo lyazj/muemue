@@ -90,10 +90,10 @@ for P3, P4 in zip(p_ps, p_es):
             ]).T
         elif H == -1:
             return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
-                -p / (m + E) * np.sin(theta/2),
-                p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
-                np.sin(theta/2),
-                -np.exp(1j * phi) * np.cos(theta/2),
+                p / (m + E) * np.sin(theta/2),
+                -p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
+                -np.sin(theta/2),
+                np.exp(1j * phi) * np.cos(theta/2),
             ]).T
 
     # Compute scattering amplitude matrix element from spinors and 4-momenta.

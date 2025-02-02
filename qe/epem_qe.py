@@ -72,6 +72,11 @@ for path in [  # sample files
         E_p = P3[:,0]
         E_e = P4[:,0]
 
+    #assert COM_FRAME == False
+    #mask = np.logical_and(theta_p >= 0.05, theta_p <= 0.10)
+    #print(np.sum(mask), np.mean(mask))
+    #P1, P2, P3, P4, theta_p, theta_e, E_p, E_e = map(lambda x: x[mask], (P1, P2, P3, P4, theta_p, theta_e, E_p, E_e))
+
     print('theta1 =', theta_p[0])
     print('theta2 =', theta_e[0])
     print('E3 =', P3[0,0])
@@ -149,10 +154,10 @@ for path in [  # sample files
             ]).T
         elif H == -1:
             return np.sqrt((m/E + 1) / 2).reshape(-1, 1) * np.array([
-                -p / (m + E) * np.sin(theta/2),
-                p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
-                np.sin(theta/2),
-                -np.exp(1j * phi) * np.cos(theta/2),
+                p / (m + E) * np.sin(theta/2),
+                -p / (m + E) * np.exp(1j * phi) * np.cos(theta/2),
+                -np.sin(theta/2),
+                np.exp(1j * phi) * np.cos(theta/2),
             ]).T
 
     # Compute scattering amplitude matrix element from spinors and 4-momenta.
@@ -200,6 +205,8 @@ for path in [  # sample files
         # Normalize rho.
         rho /= np.trace(rho, axis1=1, axis2=2).reshape(-1, 1, 1)
         print(rho[:1])
+        #print(rho.mean(axis=0))
+        #exit()
         return rho
 
     # Compute R matrix and concurrence.
