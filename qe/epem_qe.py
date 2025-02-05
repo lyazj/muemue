@@ -19,6 +19,11 @@ def get_P(E, m, theta, phi):
         p * np.cos(theta),
     ]).T
 
+def analyze(rho):
+    eigenvalues, eigenvectors = np.linalg.eig(rho)
+    print(eigenvalues)
+    print(eigenvectors)
+
 plt.figure(dpi=300)
 cmap = plt.get_cmap('viridis')
 cmap.set_bad('lightgray', 1.0)
@@ -72,8 +77,10 @@ for path in [  # sample files
         E_p = P3[:,0]
         E_e = P4[:,0]
 
-    #assert COM_FRAME == False
-    #mask = np.logical_and(theta_p >= 0.05, theta_p <= 0.10)
+    #if COM_FRAME:
+    #    mask = np.logical_and(theta_p >= 2.80, theta_p <= 3.00)
+    #else:
+    #    mask = np.logical_and(theta_p >= 0.05, theta_p <= 0.10)
     #print(np.sum(mask), np.mean(mask))
     #P1, P2, P3, P4, theta_p, theta_e, E_p, E_e = map(lambda x: x[mask], (P1, P2, P3, P4, theta_p, theta_e, E_p, E_e))
 
@@ -205,7 +212,7 @@ for path in [  # sample files
         # Normalize rho.
         rho /= np.trace(rho, axis1=1, axis2=2).reshape(-1, 1, 1)
         print(rho[:1])
-        #print(rho.mean(axis=0))
+        #analyze(rho.mean(axis=0).real)
         #exit()
         return rho
 
