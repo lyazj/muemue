@@ -19,8 +19,10 @@ cmap = plt.get_cmap('viridis')
 cmap.set_bad('lightgray', 1.0)
 offset = 0
 for path in [
-    'muemue_example_1.0GeV_pT_0.00e+00GeV_eta_2.85e+00.txt',
-    'muemue_example_10.0GeV_pT_0.00e+00GeV_eta_4.50e+00.txt',
+    #'muemue_example_1.0GeV_pT_0.00e+00GeV_eta_2.85e+00.txt',
+    'muemue_example_2.0GeV_pT_0.00e+00GeV_eta_2.88e+00.txt',
+    #'muemue_example_10.0GeV_pT_0.00e+00GeV_eta_4.50e+00.txt',
+    'muemue_example_8.0GeV_pT_0.00e+00GeV_eta_4.00e+00.txt',
     'muemue_example_160.0GeV_pT_0.00e+00GeV_eta_5.20e+00.txt',
 ]:
     muon_energy, lepton_pt, lepton_eta = map(float,
@@ -42,7 +44,7 @@ for path in [
     P2 = np.repeat(get_P(m_e, m_e, 0, 0).reshape(1, 4), E_e.shape[0], axis=0)
     P3 = get_P(E_mu, m_mu, theta_mu, 0)
     P4 = get_P(E_e, m_e, theta_e, np.pi)
-    P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
+    #P1, P2, P3, P4 = map(lab_to_com, (P1, P2, P3, P4))
     theta_mu = np.arctan2(np.hypot(P3[:,1], P3[:,2]), P3[:,3])
     theta_e = np.arctan2(np.hypot(P4[:,1], P4[:,2]), P4[:,3])
     E_mu = P3[:,0]
@@ -163,21 +165,22 @@ for path in [
     print('Efficiency:', np.mean(CHSH[concurrence > 0] > 2))
 
     data = np.array([theta_mu, theta_e, CHSH]).T
-    data = data[data[:,0].argsort()]
-    data = np.concatenate([data[-1:], data[:-1]])
-    data = data[data[:,0] >= np.pi / 2]
+    data = data[data[:,1].argsort()]
+    data = np.concatenate([data[:1], data[1:][::-1]])
+    #data = data[data[:,0] >= np.pi / 2]
     colors = cmap(mcolors.Normalize(vmin=2, vmax=2.3)(data[:,2]))
     colors[data[:,2] <= 2] = [0.8, 0.8, 0.8, 1]
     plt.scatter(data[:,0], data[:,1] + offset, c=colors,
          #label=r'$E_\mu$ = %.0f GeV  $p_\mathrm{T} \geq$%.2e GeV  $\eta \geq$%.2e' % (muon_energy, lepton_pt, lepton_eta))
-         label=r'$E_\mu$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (muon_energy, lepton_eta, offset))
-    offset += 1
+         label=r'$E_\mathrm{beam}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (muon_energy, lepton_eta, offset))
+    offset += 0.1
 
-plt.xlabel(r'$\theta^\prime_\mu$ (center of mass frame)')
-plt.ylabel(r'$\theta^\prime_e$')
-plt.legend()
+plt.xlabel(r'$\theta_\mu$ [rad] (lab frame)')
+plt.ylabel(r'$\theta_e$ [rad]')
+plt.legend(loc=(0.02, 0.15))
 plt.grid()
 cbar = plt.colorbar()
+cbar.set_label(r'Optimal CHSH value $I_2$')
 cbar.set_ticks(np.linspace(0, 1, 7))
 cbar.set_ticklabels(map(lambda x: '%.2f' % x, np.linspace(2, 2.3, 7)))
 plt.tight_layout()
