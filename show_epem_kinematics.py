@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 plt.figure(figsize=(4.2, 3.15), dpi=300)
 color = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
+#for iE_p, E_p in enumerate([2, 5, 8]):
 for iE_p, E_p in enumerate([1, 3, 10]):
     m_p = 0.000511
     m_e = 0.000511

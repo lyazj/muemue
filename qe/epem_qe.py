@@ -32,6 +32,9 @@ for path in [  # sample files
     'epem_example_1.0GeV_pT_0.00e+00GeV_eta_1.70e+00.txt',
     'epem_example_3.0GeV_pT_0.00e+00GeV_eta_2.00e+00.txt',
     'epem_example_10.0GeV_pT_0.00e+00GeV_eta_2.80e+00.txt',
+    #'epem_example_2.0GeV_pT_0.00e+00GeV_eta_2.00e+00.txt',
+    #'epem_example_5.0GeV_pT_0.00e+00GeV_eta_2.30e+00.txt',
+    #'epem_example_8.0GeV_pT_0.00e+00GeV_eta_2.50e+00.txt',
 ]:
     # Incoming beam energy and generator cuts.
     positron_energy, lepton_pt, lepton_eta = map(float,
