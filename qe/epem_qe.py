@@ -7,7 +7,7 @@ from matplotlib import colors as mcolors
 NEVENT_MAX = None
 COM_FRAME = False
 STACK = True
-BELL = True
+BELL = False
 
 # Construct 4-momentum from (E, m, theta, phi).
 def get_P(E, m, theta, phi):
@@ -55,9 +55,7 @@ for path in [  # sample files
         return P
 
     # Read observables from the sample file.
-    theta_p, theta_e, E_p, E_e = np.array(
-        open(path).read().strip().split(), dtype='float'
-    ).reshape(-1, 4)[:(NEVENT_MAX if NEVENT_MAX else int(1e20))].T
+    theta_p, theta_e, E_p, E_e = np.array(open(path).read().strip().split(), dtype='float').reshape(-1, 4)[:(NEVENT_MAX if NEVENT_MAX else int(1e20))].T
 
     # Incoming beam.
     P1 = np.repeat(get_P(positron_energy, m_p, 0, 0).reshape(1, 4), E_p.shape[0], axis=0)
@@ -265,22 +263,22 @@ for path in [  # sample files
 
     if STACK:
         if BELL:
-            plt.scatter(data[:,0], data[:,1] + offset, c=colors,
-                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+            plt.scatter(data[:,0], data[:,1] + offset, c=colors)
         else:
-            plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1),
-                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f  ($\theta^\prime_e + %g$)' % (positron_energy, lepton_eta, offset))
+            plt.scatter(data[:,0], data[:,1] + offset, c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1))
         if COM_FRAME:
+            plt.text(plt.xlim()[1] * 0.9, offset + 0.70, r'$E_\text{beam}$ = %+2s GeV  $\eta \geq$%.2f  ($\theta^\prime_{e^-} + %g$)' % (int(positron_energy), lepton_eta, offset), ha='right', rotation=-28)
             offset += 1
         else:
+            plt.text(plt.xlim()[1] * 0.9, offset + 0.02, r'$E_\text{beam}$ = %+2s GeV  $\eta \geq$%.2f  ($\theta_{e^-} + %.1f$)' % (int(positron_energy), lepton_eta, offset), ha='right')
             offset += 0.1
     else:
         if BELL:
             plt.scatter(data[:,0], data[:,1], c=colors,
-                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+                label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
         else:
             plt.scatter(data[:,0], data[:,1], c=data[:,2], cmap=cmap, norm=mcolors.LogNorm(vmin=1e-2, vmax=1),
-                 label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
+                label=r'$E_\text{beam}$ = %.0f GeV  $\eta \geq$%.2f' % (positron_energy, lepton_eta))
         if COM_FRAME:
             plt.xlabel(r'$\theta^\prime_{e^+}$ [rad] (center of mass frame)')
             plt.ylabel(r'$\theta^\prime_{e^-}$ [rad]')
@@ -305,7 +303,7 @@ if STACK:
     else:
         plt.xlabel(r'$\theta_{e^+}$ [rad] (lab frame)')
         plt.ylabel(r'$\theta_{e^-}$ [rad]')
-    plt.legend()
+    #plt.legend()
     plt.grid()
     cbar = plt.colorbar()
     if BELL:
